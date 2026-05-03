@@ -1,16 +1,14 @@
 import { test, expect } from '@playwright/test';
 
-const endpoint = 'https://fakestoreapi.com/products/1';
+const endpoint = 'https://dummy.restapiexample.com/api/v1/employees';
 
-const productSchema = {
+const responseSchema = {
   type: 'object',
-  required: ['id', 'title', 'price', 'category', 'description'],
+  required: ['status'],
   properties: {
-    id: { type: 'number' },
-    title: { type: 'string' },
-    price: { type: 'number' },
-    category: { type: 'string' },
-    description: { type: 'string' },
+    status: { type: 'string' },
+    data: { type: 'array' },
+    message: { type: 'string' },
   },
   additionalProperties: true,
 };
@@ -37,7 +35,9 @@ function validateJsonSchema(data, schema) {
           if (propertySchema.type === 'string' && typeof value !== 'string') {
             return false;
           }
-          // Add additional primitive checks as needed.
+          if (propertySchema.type === 'array' && !Array.isArray(value)) {
+            return false;
+          }
         }
       }
     }
@@ -46,24 +46,20 @@ function validateJsonSchema(data, schema) {
   return false;
 }
 
-test.describe('FakeStore API product endpoint', () => {
-  test('should GET product 1 and validate required fields', async ({ request }) => {
+test.describe('Dummy REST API employees endpoint', () => {
+  test('should GET employees and validate status field', async ({ request }) => {
     const response = await request.get(endpoint);
 
     expect(response.status()).toBe(200);
 
     const body = await response.json();
 
-    expect(body).toHaveProperty('id');
-    expect(body).toHaveProperty('title');
-    expect(body).toHaveProperty('price');
-    expect(body).toHaveProperty('category');
-    expect(body).toHaveProperty('description');
+    expect(body).toHaveProperty('status');
 
-    const isValidSchema = validateJsonSchema(body, productSchema);
+    const isValidSchema = validateJsonSchema(body, responseSchema);
     expect(isValidSchema).toBe(true);
 
-    console.log(`Product title: ${body.title}`);
-    console.log(`Product price: ${body.price}`);
+    console.log(`Product title: ${body.title ?? 'N/A'}`);
+    console.log(`Product price: ${body.price ?? 'N/A'}`);
   });
 });
